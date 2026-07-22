@@ -16,6 +16,7 @@ sealed class MainForm : Form
     private PictureBox _preview = null!;
     private Button _exportPdfBtn = null!;
     private Button _exportPngBtn = null!;
+    private Button _printBtn = null!;
     private Label _statusLabel = null!;
 
     public MainForm()
@@ -33,13 +34,21 @@ sealed class MainForm : Form
         var bottomPanel = new Panel { Height = 50, Dock = DockStyle.Bottom };
         _exportPdfBtn = new Button { Text = "Export PDF", Size = new Size(110, 32), Location = new Point(8, 9) };
         _exportPngBtn = new Button { Text = "Export PNG", Size = new Size(110, 32), Location = new Point(126, 9) };
-        _statusLabel = new Label { Location = new Point(252, 16), Size = new Size(500, 18), ForeColor = Color.Gray };
-        bottomPanel.Controls.AddRange([_exportPdfBtn, _exportPngBtn, _statusLabel]);
+        _printBtn     = new Button { Text = "Print…",     Size = new Size(110, 32), Location = new Point(244, 9) };
+        _statusLabel  = new Label  { Location = new Point(370, 16), Size = new Size(500, 18), ForeColor = Color.Gray };
+        bottomPanel.Controls.AddRange([_exportPdfBtn, _exportPngBtn, _printBtn, _statusLabel]);
         Controls.Add(bottomPanel);
 
         // Top search bar
         var topPanel = new Panel { Height = 40, Dock = DockStyle.Top, Padding = new Padding(6) };
+
+        var helpLink = new LinkLabel { Text = "Help && Docs", Dock = DockStyle.Right, Width = 87, TextAlign = ContentAlignment.MiddleCenter };
+        helpLink.LinkClicked += (_, _) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://www.jlion.com/tools/jfont") { UseShellExecute = true });
+
         _searchBox = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "Filter fonts…" };
+
+        // Right-docked controls must be added before Fill so docking resolves correctly
+        topPanel.Controls.Add(helpLink);
         topPanel.Controls.Add(_searchBox);
         Controls.Add(topPanel);
 
@@ -72,6 +81,7 @@ sealed class MainForm : Form
         _fontList.SelectedIndexChanged += (_, _) => UpdatePreview();
         _exportPdfBtn.Click += (_, _) => ExportPdf();
         _exportPngBtn.Click += (_, _) => ExportPng();
+        _printBtn.Click     += (_, _) => PrintCard();
     }
 
     private void LoadFonts()
@@ -141,6 +151,33 @@ sealed class MainForm : Form
 
         bmp.UnlockBits(data);
         return bmp;
+    }
+
+    private void PrintCard()
+    {
+        if (_fontList.SelectedItem is not FontInfo font) return;
+
+        using var doc = new System.Drawing.Printing.PrintDocument();
+        doc.PrintPage += (_, e) =>
+        {
+            float scale = e.Graphics!.DpiX / 72f;
+            using var bmp = RenderToBitmap(font, scale);
+            e.Graphics.DrawImage(bmp, e.PageBounds);
+        };
+
+        using var dlg = new PrintDialog { Document = doc, UseEXDialog = true };
+        if (dlg.ShowDialog(this) == DialogResult.OK)
+        {
+            try
+            {
+                doc.Print();
+                _statusLabel.Text = $"Sent to printer: {doc.PrinterSettings.PrinterName}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Print failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 
     private void ExportPdf()

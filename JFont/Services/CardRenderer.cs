@@ -29,6 +29,7 @@ sealed class CardRenderer
         y = DrawSizeSamples(canvas, x, y, cw, font, options);
         y += 10f;
         DrawCharacterMap(canvas, x, y, cw, height - options.Margin - y, font);
+        DrawFooter(canvas, width, height, options);
     }
 
     private float DrawHeader(SKCanvas canvas, float x, float y, float width, FontInfo font)
@@ -175,6 +176,15 @@ sealed class CardRenderer
             col++;
             if (col >= cols) { col = 0; row++; }
         }
+    }
+
+    private void DrawFooter(SKCanvas canvas, float width, float height, CardOptions options)
+    {
+        const string text = "For more information about this product, visit jlion.com/tools/jfont";
+        using var typeface = UiTypeface();
+        using var font = new SKFont(typeface, 7f);
+        using var paint = new SKPaint { Color = LabelColor, IsAntialias = true };
+        canvas.DrawText(text, width / 2f, height - options.Margin / 2f, SKTextAlign.Center, font, paint);
     }
 
     private float SectionLabel(SKCanvas canvas, float x, float y, string label)
