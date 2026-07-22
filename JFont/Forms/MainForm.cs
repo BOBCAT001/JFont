@@ -44,13 +44,16 @@ sealed class MainForm : Form
         Controls.Add(topPanel);
 
         // Main split: font list | card preview
-        var split = new SplitContainer
+        var split = new SplitContainer { Dock = DockStyle.Fill };
+        // MinSize properties re-validate the stored SplitterDistance (default 50) via an internal
+        // callback when the handle is created, so they must be set after SplitterDistance is
+        // established. BeginInvoke from Load defers past WM_SIZE so Width is real.
+        Load += (_, _) => BeginInvoke(() =>
         {
-            Dock = DockStyle.Fill,
-            SplitterDistance = 230,
-            Panel1MinSize = 150,
-            Panel2MinSize = 300,
-        };
+            split.SplitterDistance = 230;
+            split.Panel1MinSize = 150;
+            split.Panel2MinSize = 300;
+        });
 
         _fontList = new ListBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9f) };
         split.Panel1.Controls.Add(_fontList);
