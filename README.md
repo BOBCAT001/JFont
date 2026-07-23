@@ -2,6 +2,8 @@
 
 A Windows desktop app that generates printable font reference cards for any installed font on your system.
 
+![JFont screenshot](.github/images/jfont_sample.jpg)
+
 ## What it does
 
 Select a font from the list and JFont renders a US Letter-sized card showing:
